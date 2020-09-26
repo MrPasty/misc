@@ -18,7 +18,7 @@
 ################################################################################
 OLDIFS=$IFS   # Save current so we can restore if need be
 IFS=$'\t\n'
-#set -f
+set -f # disable globbing
 #set -eu -o pipefail
 #shopt -s failglob
 readonly ARGS=($@)
