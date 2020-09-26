@@ -1,0 +1,138 @@
+#!/bin/bash
+################################################################################
+#                              suffix-search                                   #
+#                                                                              #
+# Searches the given directory for files matching those provided in a comma    # 
+# seperated list.  To search for files that contain spaces wrap the word in    #
+# single quotes.  Wildcards are supported                                      #
+#                                                                              #
+# Note: will only return success if at least one of the files searched for is  #
+#       found.                                                                 #
+#                                                                              #
+# Change History                                                               #
+# 09/09/20                  First version                                      #
+# 26/09/20                  Fixed the find routine to speed up the script      #
+#                                                                              #
+################################################################################
+################################################################################
+################################################################################
+OLDIFS=$IFS   # Save current so we can restore if need be
+IFS=$'\t\n'
+#set -f
+#set -eu -o pipefail
+#shopt -s failglob
+readonly ARGS=($@)
+readonly ARGSLEN=${#ARGS[@]}
+readonly BASEEPOCH=1577836800 # 01/01/2020 @ 12:00am (UTC)
+
+
+function usage() {
+    printf '%s\n'
+    printf '%s\n' "Please supply: <search path> <start date> <end date> <file list comma seperated>"
+    printf '%s\n'
+    printf '%s\n' "Note: Datetime must be in unix time format, use `setterm -bold on` date -d 'Jan 27 2020 01:00' +'%s' `setterm -bold off` to convert a datestamp to unix time"
+    printf '%s\n' "      Filenames can contain wildcards, if name contains a space wrap it in single quotes"
+    printf '%s\n'
+    printf '%s\n' "Example: suffix-search /home/foo 1580515200 1599643471 file1.txt,'foo bar',bar*,foo[1-3]*"
+    printf '%s\n'
+    exit 1
+}
+
+
+function count_args() {
+    if [ "${ARGS[0]}" == "--help" ]; then
+        usage
+    elif [ "$ARGSLEN" -lt 4 ]; then
+        printf '%s\n'
+        printf '%s\n' "Error: You must specify at least 4 command line arguments"
+        usage
+    fi
+}
+
+
+function check_args() {
+    local errormsg
+    local errorindex=0
+
+    # Check path supplied is valid
+    if [ ! -d ${ARGS[0]} ] ; then
+        errormsg[$errorindex]="Invalid path supplied - ${ARGS[0]}"
+        (( errorindex++ ))
+    fi
+
+    # Check start and end date, ensure numeric and is in valid range to limit search range
+    re='^[0-9]+$'
+    if ! [[ ${ARGS[1]} =~ $re ]]; then
+        errormsg[$errorindex]="Start date is invalid ${ARGS[1]}"
+        (( errorindex++ ))
+    elif ! [ ${ARGS[1]} -ge $BASEEPOCH -a ${ARGS[1]} -le `date +%s` ]; then
+         errormsg[$errorindex]="Start date is invalid or in the future ${ARGS[1]}"
+         (( errorindex++ ))
+     fi
+
+    # Check start and end date, ensure numeric and is in valid range to limit search range
+    if ! [[ ${ARGS[2]} =~ $re ]]; then
+        errormsg[$errorindex]="End date is invalid ${ARGS[2]}"
+        (( errorindex++ ))
+    elif ! [ ${ARGS[2]} -ge ${ARGS[1]} ]; then
+         errormsg[$errorindex]="End date is invalid ${ARGS[2]}"
+         (( errorindex++ ))
+     fi
+
+
+    # Check to see if we have any errors and report to user
+    if [ ${#errormsg[@]} -ne 0 ]; then
+        printf '%s\n' "The following errors were found:"
+        printf '%s\n' "${errormsg[@]}"
+        exit 1
+    fi
+
+    # Set the vars
+    search_path=${ARGS[0]}
+    start_date=${ARGS[1]}
+    end_date=${ARGS[2]}
+    
+
+    # Debug
+    #printf '%s\n' "Search Path: $search_path"
+    #printf '%s\n' "Start Date: $(date +"%F %X" -d @$(echo "$start_date"))"
+    #printf '%s\n' "End Date: $(date +"%F %X" -d @$(echo "$end_date"))"
+}
+
+
+function find_files() {
+    local results=0
+    local filelist=(${ARGS[3]})
+
+    cmd="find $search_path -type f -newermt '@${start_date}' ! -newermt '@${end_date}' \( -name '${filelist//[,]/\' -o -name \'}' \)"
+    # Debug
+    # eval $cmd -ls
+
+    results=`eval $cmd | wc -l`
+    if [ $results -gt 0 ]; then
+        # Debug
+        printf '%s\n' "Found $results files!"
+
+        exit 0
+    else
+        # Debug
+        printf '%s\n' "No files found!"       
+
+        exit 1
+    fi
+
+}
+
+main() {
+    
+    count_args
+    check_args $ARGS
+    find_files $ARGS
+}
+
+
+# Main Program
+main
+
+# Cleanup
+IFS=$OLDIFS
