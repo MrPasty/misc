@@ -4,7 +4,8 @@
 #                                                                              #
 # Searches the given directory for files matching those provided in a comma    # 
 # seperated list.  To search for files that contain spaces wrap the word in    #
-# single quotes, same applies to filenames with wildcards in.                  #
+# single quotes, same applies to filenames with wildcards in, this prevents    #
+# bash from expanding wildcards before the script is run.                      #
 #                                                                              #
 # Note: will only return success if at least one of the files searched for is  #
 #       found.                                                                 #
