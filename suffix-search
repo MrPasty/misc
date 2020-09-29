@@ -4,7 +4,7 @@
 #                                                                              #
 # Searches the given directory for files matching those provided in a comma    # 
 # seperated list.  To search for files that contain spaces wrap the word in    #
-# single quotes.  Wildcards are supported                                      #
+# single quotes, same applies to filenames with wildcards in.                  #
 #                                                                              #
 # Note: will only return success if at least one of the files searched for is  #
 #       found.                                                                 #
@@ -31,9 +31,9 @@ function usage() {
     printf '%s\n' "Please supply: <search path> <start date> <end date> <file list comma seperated>"
     printf '\n'
     printf '%s\n' "Note: Datetime must be in unix time format, use $(setterm -bold on) date -d 'April 28 2020 01:00' +'%s' $(setterm -bold off) to convert a datestamp to unix time"
-    printf '%s\n' "      Filenames can contain wildcards, if name contains a space wrap it in single quotes"
+    printf '%s\n' "      Filenames can contain wildcards or spaces just wrap them in single quotes"
     printf '\n'
-    printf '%s\n' "Example: suffix-search /home/foo 1580515200 1599643471 file1.txt,'foo bar',bar*,foo[1-3]*"
+    printf '%s\n' "Example: suffix-search /home/foo 1580515200 1599643471 file1.txt,'foo bar','bar*','foo[1-3]*'"
     printf '\n'
     exit 1
 }
